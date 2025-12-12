@@ -25,7 +25,7 @@ ________________________________________________________________________________
 ____________________________________________________________________________________________________________________________________________________________________
 
  # Project structure:
-   1. introduction 
+   1. introduction (https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/introduction%20-%20SOLDADOSS.pdf)
    2. work repartition
    3. code explanaition
    4. code
