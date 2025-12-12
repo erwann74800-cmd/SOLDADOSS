@@ -29,5 +29,5 @@ ________________________________________________________________________________
    2. work repartition
    3. code explanaition
    4. code
-   5. conclusion
-   6. power point (presentation)
+   5. conclusion (https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/Conclusion%20-%20SOLDADOSS.pdf)
+   6. power point 
