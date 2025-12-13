@@ -32,3 +32,5 @@ ________________________________________________________________________________
    4. code
    5. [conclusion](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/conclusion%20-%20SOLDADOSS.pdf)
    6. power point 
+
+file:///C:/Users/yduvi/Downloads/!doctype%20html.html
