@@ -12,7 +12,7 @@ ________________________________________________________________________________
 # Code
 
 In order to acces to our website/code, click on the link that is named "code" then download the code and open it. 
-Once it's opened, it will display our site.
+Once it's opened, it will display our site directly on any browser (firefox, google,...).
 
 ____________________________________________________________________________________________________________________________________________________________________
 
