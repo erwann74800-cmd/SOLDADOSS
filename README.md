@@ -1,4 +1,4 @@
-# TSI/ESME AI in aviation group project (Module Code C-250-01):
+# TSI/ESME AI in aviation group project (Module Code: C-250-01):
 
 The topic of our project is to create an innovative system (in the aicraft domain) that uses AI in our code and thats answers to a current problematic that needs solving. Then we should have a working code and place it on github and explain our project.
 
