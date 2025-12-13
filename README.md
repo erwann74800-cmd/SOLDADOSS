@@ -9,7 +9,14 @@ SOLDADOSS: Survivor-Oriented Learning-Driven Drone System, our project is a dron
 
 ____________________________________________________________________________________________________________________________________________________________________
 
+# Code
+
+In order to acces to our website/code, download the code and opens it on a browser that will display to result of the code.
+
+____________________________________________________________________________________________________________________________________________________________________
+
 # Team Members:
+
 - Nathan Versavel
 - Enzo Silvestre
 - Erwann Duvillard
@@ -29,7 +36,7 @@ ________________________________________________________________________________
    1. [introduction](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/introduction%20-%20SOLDADOSS.pdf)
    2. [work repartition](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/work%20repartition.pdf)
    3. [code explanaition](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/Code%20and%20interface%20explanation.pdf)
-   4. code
+   4. [code](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/Code%20_%20SOLDADOSS.html)
    5. [conclusion](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/conclusion%20-%20SOLDADOSS.pdf)
    6. power point 
 
