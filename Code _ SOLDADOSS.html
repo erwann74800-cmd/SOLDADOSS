@@ -1,0 +1,1041 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"/>
+<title>Interactive Grid Q-Learning (Parcours) — Amélioré</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+    /* VARIABLES GLOBALES */
+    :root{
+        --bg: #1e1e2e; /* Fond principal sombre */
+        --panel: #272838; /* Fond des panneaux */
+        --muted: #b4b4c2; /* Texte secondaire */
+        --text-color: #f1f1f9; /* Texte principal */
+        --accent-blue: #7aa2ff; /* Couleur d'accentuation (Graphique, Stats) */
+        --accent-green: #9ece6a; /* Succès */
+        --accent-red: #f7768e; /* Danger/Obstacle */
+        --font-family: 'Inter', Roboto, Arial, sans-serif;
+    }
+
+    /* GENERAL */
+    body{ 
+        margin: 0; 
+        font-family: var(--font-family); 
+        background: var(--bg); 
+        color: var(--text-color); 
+        display: flex; 
+        flex-direction: column; 
+        align-items: center; 
+        padding: 20px; 
+    }
+    header{ 
+        font-size: 24px; 
+        font-weight: 700; 
+        margin-bottom: 20px; 
+        color: var(--text-color);
+        text-align: center;
+    }
+    .wrap{ 
+        display: flex; 
+        gap: 20px; 
+        width: 100%; 
+        max-width: 1600px; 
+        flex-wrap: wrap; 
+        justify-content: center;
+    }
+    .panel{ 
+        background: var(--panel); 
+        padding: 16px; 
+        border-radius: 12px; 
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3); 
+        border: 1px solid #3d3d4b;
+    }
+
+    /* CONTROLS (Colonne de Gauche) */
+    .controls{ 
+        display: flex; 
+        flex-direction: column;
+        gap: 12px; 
+        width: 300px; 
+        min-width: 300px;
+    }
+    .controls > div:first-child, .controls > div:nth-child(5) { 
+        font-size: 16px; 
+        font-weight: 700; 
+        color: var(--accent-blue);
+        margin-top: 5px;
+        margin-bottom: -5px;
+    }
+    .controls label{ 
+        font-size: 14px; 
+        color: var(--muted); 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center;
+    }
+    .controls input[type=range], .controls input[type=number] { 
+        width: 100%; 
+        margin-top: 4px;
+    }
+    .controls input[type=number] {
+        background: #3d3d4b;
+        border: 1px solid #5a5a6b;
+        color: var(--text-color);
+        padding: 4px 8px;
+        border-radius: 6px;
+        width: 80px;
+        text-align: right;
+    }
+    
+    /* Boutons */
+    button{ 
+        padding: 10px 15px; 
+        border-radius: 8px; 
+        border: none; 
+        background: #4a4a5b; 
+        color: var(--text-color); 
+        cursor: pointer; 
+        transition: background 0.2s;
+        font-weight: 600;
+    }
+    button:hover{ background: #5a5a6b; }
+    #startBtn{ background: var(--accent-green); color: #1e1e2e; }
+    #startBtn:hover{ background: #7cc05a; }
+    #pauseBtn{ background: #e09f1f; color: #1e1e2e; }
+    #pauseBtn:hover{ background: #f0b03f; }
+    #resetBtn{ background: var(--accent-red); color: #1e1e2e; }
+    #resetBtn:hover{ background: #d76a7c; }
+
+    .row{ display:flex; gap:8px; }
+    .muted-small{ color:var(--muted); font-size:12px; margin-top: 10px; }
+
+    /* ZONE PRINCIPALE (Canvas) */
+    .center { 
+        display:flex; 
+        flex-direction:column; 
+        align-items:center; 
+        gap:15px; 
+        flex-grow: 1;
+        min-width: 400px;
+    }
+    #canvasWrap{ 
+        background: #000; 
+        padding: 15px; 
+        border-radius: 10px; 
+        box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+    }
+    canvas{ display:block; border-radius: 8px; }
+    .hud{ 
+        display: flex; 
+        gap: 20px; 
+        color: var(--muted); 
+        font-size: 14px; 
+        flex-wrap: wrap; 
+        justify-content: center;
+        padding: 8px 0;
+    }
+    .hud strong { 
+        color: var(--accent-blue); 
+        font-weight: 700;
+    }
+    .hint{ color:var(--muted); font-size:13px; text-align:center; }
+
+    /* GRAPHIQUE ET STATS (Colonne de Droite) */
+    .chart-container{ 
+        width: 100%; 
+        flex: 1.5; 
+        min-width: 400px;
+    }
+    #chartWrap{ 
+        background: #3d3d4b; /* Fond graphique légèrement plus clair */
+        padding: 12px; 
+        border-radius: 8px; 
+        height: 300px; 
+        margin-bottom: 15px;
+        box-shadow: inset 0 0 5px rgba(0,0,0,0.2);
+    }
+    
+    /* STATS GRID */
+    .stats-grid{ 
+        display: grid; 
+        grid-template-columns: repeat(3, 1fr); 
+        gap: 10px; 
+        margin-top: 0;
+    }
+    .stat-box{ 
+        background: #3d3d4b; 
+        padding: 12px; 
+        border-radius: 8px; 
+        text-align: center; 
+        transition: transform 0.2s;
+    }
+    .stat-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    }
+    .stat-label{ 
+        font-size: 12px; 
+        color: var(--muted); 
+        margin-bottom: 4px;
+    }
+    .stat-value{ 
+        font-size: 20px; 
+        font-weight: 700; 
+        color: var(--accent-blue);
+    }
+    /* Couleurs spécifiques pour la clarté */
+    #successRate, #recentSuccessCount { color: var(--accent-green); }
+    #bestEpisode { color: #ffd86b; }
+    #paramsSummary { font-size: 16px; }
+
+</style>
+</head>
+<body>
+<header>Interactive Grid Q-Learning Playground</header>
+
+<div class="wrap">
+  <div class="panel controls">
+    <div>Hyperparameters & Algorithm</div>
+    <label>Learning rate $\alpha$ <span id="lrVal">0.8</span></label>
+    <input id="lr" type="range" min="0.01" max="1" step="0.01" value="0.8">
+
+    <label>Discount $\gamma$ <span id="gammaVal">0.95</span></label>
+    <input id="gamma" type="range" min="0" max="1" step="0.01" value="0.95">
+
+    <label>Greedy $\epsilon$ (Exploration) <span id="epsVal">0.25</span></label>
+    <input id="eps" type="range" min="0" max="1" step="0.01" value="0.25">
+
+    <label>Epsilon decay per episode <span id="decayVal">0.995</span></label>
+    <input id="decay" type="range" min="0.9" max="1" step="0.0005" value="0.995">
+
+    <div>Environment & Execution</div>
+    <label>Nb. Episodes <span id="episodesVal">1000</span></label>
+    <input id="episodes" type="number" min="1" value="1000">
+
+    <label>Speed (ms / step) <span id="speedVal">40</span></label>
+    <input id="speed" type="range" min="10" max="500" step="10" value="40">
+
+    <div class="row">
+      <label>Rows <span id="rowsVal">10</span></label>
+      <input id="rows" type="range" min="5" max="30" step="1" value="10">
+    </div>
+    <div class="row">
+      <label>Cols <span id="colsVal">10</span></label>
+      <input id="cols" type="range" min="5" max="30" step="1" value="10">
+    </div>
+
+    <div class="row" style="margin-top:8px; justify-content: space-between;">
+      <button id="startBtn" style="flex: 1;">Start</button>
+      <button id="pauseBtn" disabled style="flex: 1;">Pause</button>
+      <button id="resetBtn" style="flex: 1;">Reset</button>
+    </div>
+
+    <div class="row" style="margin-top:8px;">
+      <button id="loadParcours" style="flex: 1;">Load Example</button>
+      <button id="clearObstacles" style="flex: 1;">Clear Obstacles</button>
+    </div>
+
+    <div class="row" style="margin-top:8px;">
+      <button id="exportMap" style="flex: 1;">Export Map</button>
+      <button id="importMapBtn" style="flex: 1;">Import Map</button>
+      <input id="importMapFile" type="file" accept="application/json">
+    </div>
+
+    <div style="margin-top:10px;">
+      <label><input id="showQ" type="checkbox" checked> Show Q-Heatmap</label><br>
+      <label><input id="showPolicy" type="checkbox" checked> Show Policy Arrows</label>
+    </div>
+
+    <div class="muted-small">
+      Click: Toggle obstacle. <br>
+      Ctrl/Cmd + click: Set Start. Shift + click: Set Goal.
+    </div>
+  </div>
+
+  <div class="panel center">
+    <div id="canvasWrap">
+      <canvas id="gridCanvas" width="540" height="540"></canvas>
+    </div>
+
+    <div class="hud">
+      <div>Episode: <strong id="epCount">0</strong></div>
+      <div>Step: <strong id="stepCount">0</strong></div>
+      <div>Reward: <strong id="lastReward">0</strong></div>
+      <div>TD Error: <strong id="tdErrorHUD">0</strong></div>
+      <div>$\epsilon$: <strong id="epsHUD">0.25</strong></div>
+    </div>
+
+    <div class="hint">Watch the agent explore and optimize its path. Adjust $\epsilon, \alpha, \gamma$ parameters in real time!</div>
+  </div>
+
+  <div class="panel chart-container">
+    <div style="font-weight:700; font-size: 16px; color: var(--accent-blue); margin-bottom: 8px;">Learning Progress</div>
+    <div id="chartWrap">
+      <canvas id="chartCanvas"></canvas>
+    </div>
+    
+    <div style="font-weight:700; font-size: 16px; color: var(--accent-blue); margin-bottom: 8px;">Key Statistics (Sliding Window)</div>
+    <div class="stats-grid">
+      <div class="stat-box">
+        <div class="stat-label">Success Rate (100 Ep.)</div>
+        <div class="stat-value" id="successRate">0%</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Successes / Total (100 Ep.)</div>
+        <div class="stat-value" id="recentSuccessCount">0/0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Best Reward Episode</div>
+        <div class="stat-value" id="bestEpisode">-</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Average Reward (100 Ep.)</div>
+        <div class="stat-value" id="avgReward">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Average Steps (100 Ep.)</div>
+        <div class="stat-value" id="avgSteps">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Active Parameters ($\epsilon$ / $\alpha$ / $\gamma$)</div>
+        <div class="stat-value" id="paramsSummary">
+          <span id="epsilonValue">0.25</span> / 
+          <span id="alphaValue">0.80</span> / 
+          <span id="gammaValue">0.95</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Improved Interactive Grid Q-Learning Playground
+   - Mise à jour: Statistiques en temps réel plus détaillées pour la compréhension.
+   - Ajout: Affichage de la TD Error (Erreur de Différence Temporelle).
+   - Ajout: Résumé des hyperparamètres actifs.
+*/
+
+(() => {
+  // DOM
+  const canvas = document.getElementById('gridCanvas');
+  const ctx = canvas.getContext('2d');
+  const chartCanvas = document.getElementById('chartCanvas');
+  const chartCtx = chartCanvas.getContext('2d');
+  
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const loadParcoursBtn = document.getElementById('loadParcours');
+  const clearObsBtn = document.getElementById('clearObstacles');
+  const exportMapBtn = document.getElementById('exportMap');
+  const importMapBtn = document.getElementById('importMapBtn');
+  const importMapFile = document.getElementById('importMapFile');
+
+  const lrEl = document.getElementById('lr');
+  const gammaEl = document.getElementById('gamma');
+  const epsEl = document.getElementById('eps');
+  const decayEl = document.getElementById('decay');
+  const episodesEl = document.getElementById('episodes');
+  const speedEl = document.getElementById('speed');
+  const rowsEl = document.getElementById('rows');
+  const colsEl = document.getElementById('cols');
+  const showQEl = document.getElementById('showQ');
+  const showPolicyEl = document.getElementById('showPolicy');
+
+  const lrVal = document.getElementById('lrVal');
+  const gammaVal = document.getElementById('gammaVal');
+  const epsVal = document.getElementById('epsVal');
+  const decayVal = document.getElementById('decayVal');
+  const episodesVal = document.getElementById('episodesVal');
+  const speedVal = document.getElementById('speedVal');
+  const rowsVal = document.getElementById('rowsVal');
+  const colsVal = document.getElementById('colsVal');
+
+  const epCount = document.getElementById('epCount');
+  const stepCount = document.getElementById('stepCount');
+  const lastRewardEl = document.getElementById('lastReward');
+  const epsHUD = document.getElementById('epsHUD');
+  
+  const successRateEl = document.getElementById('successRate');
+  const avgRewardEl = document.getElementById('avgReward');
+  const bestEpisodeEl = document.getElementById('bestEpisode');
+  const avgStepsEl = document.getElementById('avgSteps');
+
+  // State
+  let rows = parseInt(rowsEl.value);
+  let cols = parseInt(colsEl.value);
+  let cellSize = Math.floor(canvas.width / Math.max(cols, rows));
+  let grid = []; // 0 empty, 1 obstacle
+  let startPos = {r: 0, c: 0};
+  let goalPos = {r: rows-1, c: cols-1};
+  let agent = {r: startPos.r, c: startPos.c};
+  let Q = []; // 3D array [r][c][4]
+  let episode = 0, step = 0;
+  let running = false, paused = false, stopRequested = false;
+  let speedMs = parseInt(speedEl.value);
+  let episodesTarget = parseInt(episodesEl.value);
+  let epsilon = parseFloat(epsEl.value);
+
+  // Chart data
+  let episodeRewards = [];
+  let episodeSteps = [];
+  let successfulEpisodes = 0;
+  let totalReward = 0;
+  let bestReward = -Infinity;
+  let bestEpisodeNum = 0;
+
+  // Actions
+  const ACTIONS = [
+    {name:'up', dr:-1, dc:0},
+    {name:'down', dr:1, dc:0},
+    {name:'left', dr:0, dc:-1},
+    {name:'right', dr:0, dc:1}
+  ];
+
+  // Example parcours map
+  const exampleParcours = [
+    [0,0,0,1,1,1,0,0,0,0],
+    [0,1,0,0,0,0,0,1,0,0],
+    [0,1,0,0,0,0,0,1,0,0],
+    [0,1,0,0,0,0,0,1,0,0],
+    [0,0,0,1,1,1,0,0,0,0],
+    [0,0,0,0,0,0,1,0,0,0],
+    [1,0,1,0,0,0,0,0,1,0],
+    [0,0,0,0,1,0,0,1,0,0],
+    [0,1,0,0,1,0,0,1,0,0],
+    [0,1,0,0,0,0,1,0,0,0],
+    [0,0,0,1,0,0,0,0,1,0],
+    [0,0,1,0,0,0,1,0,0,0],
+    [0,1,0,0,0,0,0,1,0,0],
+    [0,1,0,0,1,0,0,1,0,0],
+    [0,0,0,0,1,0,0,0,0,0],
+    [0,0,0,0,0,0,1,0,0,0],
+    [0,0,1,0,0,1,0,0,1,0],
+    [0,1,0,0,1,0,0,1,0,0],
+    [2,0,0,0,0,0,0,0,0,3],
+    [0,0,0,0,0,0,0,0,0,0]
+  ];
+
+  // Helpers
+  function makeGrid(r,c){
+    grid = Array.from({length:r}, ()=>Array(c).fill(0));
+    startPos = {r:0,c:0};
+    goalPos = {r:r-1,c:c-1};
+    agent = {...startPos};
+    Q = Array.from({length:r}, ()=>Array.from({length:c}, ()=>[0,0,0,0]));
+    episode = 0; step = 0;
+    episodeRewards = [];
+    episodeSteps = [];
+    successfulEpisodes = 0;
+    totalReward = 0;
+    bestReward = -Infinity;
+    bestEpisodeNum = 0;
+    updateHUD();
+    updateStats();
+  }
+
+  function loadExampleParcours(){
+    rows = exampleParcours.length;
+    cols = exampleParcours[0].length;
+    rowsEl.value = rows; colsEl.value = cols;
+    rowsVal.innerText = rows; colsVal.innerText = cols;
+    makeGrid(rows, cols);
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const v = exampleParcours[r][c];
+        if(v===1) grid[r][c]=1;
+        else grid[r][c]=0;
+        if(v===2){ startPos = {r,c}; agent = {...startPos}; }
+        if(v===3){ goalPos = {r,c}; }
+      }
+    }
+    resizeCanvas();
+    render();
+    renderChart();
+  }
+
+  function resizeCanvas(){
+    const pad = 8;
+    // Calculate maximum size based on container, up to a max limit
+    const containerWidth = document.querySelector('.center').clientWidth - 40; 
+    const size = Math.min(containerWidth, 720); 
+    
+    canvas.width = size;
+    canvas.height = size;
+    cellSize = Math.floor(canvas.width / Math.max(cols, rows));
+    
+    // Chart canvas sizing
+    const chartWrap = document.getElementById('chartWrap');
+    chartCanvas.width = chartWrap.clientWidth;
+    chartCanvas.height = chartWrap.clientHeight;
+  }
+
+  function updateHUD(){
+    epCount.innerText = episode;
+    stepCount.innerText = step;
+    epsHUD.innerText = epsilon.toFixed(3);
+  }
+
+  // Mise à jour des stats plus détaillées
+  function updateStats(){
+    const recentWindow = Math.min(100, episodeRewards.length);
+    const recentRewards = episodeRewards.slice(-recentWindow);
+    const recentSteps = episodeSteps.slice(-recentWindow);
+    
+    // Succès si récompense > 0 (Goal +10, Obstacle -10)
+    const successfulIndices = episodeSteps.map((s, i) => ({step: s, reward: episodeRewards[i]}))
+      .slice(-recentWindow)
+      .filter(item => item.reward > 0); 
+      
+    const successfulRecent = successfulIndices.length; 
+    
+    const avgRew = recentRewards.length > 0 
+      ? (recentRewards.reduce((a,b)=>a+b, 0) / recentRewards.length).toFixed(2)
+      : '0';
+    
+    const avgStp = recentSteps.length > 0
+      ? Math.round(recentSteps.reduce((a,b)=>a+b, 0) / recentSteps.length)
+      : 0;
+    
+    const successRate = recentRewards.length > 0
+      ? Math.round((successfulRecent / recentRewards.length) * 100)
+      : 0;
+    
+    // Mise à jour des éléments DOM
+    successRateEl.innerText = successRate + '%';
+    avgRewardEl.innerText = avgRew;
+    avgStepsEl.innerText = avgStp;
+    
+    // Affichage de la récompense maximale
+    bestEpisodeEl.innerText = bestEpisodeNum > 0 ? `#${bestEpisodeNum} (${bestReward.toFixed(2)})` : '-'; 
+
+    // Affichage du compte de succès récent
+    document.getElementById('recentSuccessCount').innerText = `${successfulRecent}/${recentWindow}`;
+    
+    // Affichage des paramètres actifs
+    document.getElementById('epsilonValue').innerText = epsilon.toFixed(3);
+    document.getElementById('alphaValue').innerText = parseFloat(lrEl.value).toFixed(2);
+    document.getElementById('gammaValue').innerText = parseFloat(gammaEl.value).toFixed(2);
+  }
+
+  function resetEnv(){
+    running = false; paused = false; stopRequested = false;
+    startBtn.disabled = false; pauseBtn.disabled = true; pauseBtn.innerText = 'Pause';
+    makeGrid(rows, cols);
+    resizeCanvas();
+    render();
+    renderChart();
+  }
+
+  // Drawing
+  function render(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    // background
+    ctx.fillStyle = '#2d2d2d';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    // draw cells
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const x = c*cellSize;
+        const y = r*cellSize;
+        // base
+        ctx.fillStyle = '#1e1e2e';
+        ctx.fillRect(x+1,y+1,cellSize-2,cellSize-2);
+
+        // heatmap (best Q) if enabled
+        if(showQEl.checked){
+          const best = Math.max(...Q[r][c]);
+          if(Math.abs(best) > 1e-6){
+            // scale using tanh mapping for visual balance
+            const intensity = Math.tanh(Math.abs(best)/6);
+            if(best>0){
+              ctx.fillStyle = `rgba(158,206,106,${0.12 + 0.6*intensity})`; /* vert clair */
+              ctx.fillRect(x+1,y+1,cellSize-2,cellSize-2);
+            } else {
+              ctx.fillStyle = `rgba(247,118,142,${0.12 + 0.6*intensity})`; /* rouge clair */
+              ctx.fillRect(x+1,y+1,cellSize-2,cellSize-2);
+            }
+          }
+        }
+
+        // obstacle
+        if(grid[r][c] === 1){
+          ctx.fillStyle = '#5a3535';
+          ctx.fillRect(x+2,y+2,cellSize-4,cellSize-4);
+          // skull icon
+          ctx.fillStyle = '#fff';
+          ctx.font = `${Math.max(10,cellSize/2.6)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText('☠', x + cellSize/2, y + cellSize/2 + 1);
+        }
+
+        // start
+        if(startPos.r===r && startPos.c===c){
+          ctx.fillStyle = '#ffd86b'; /* Jaune départ */
+          ctx.fillRect(x+2,y+2,cellSize-4,cellSize-4);
+        }
+        // goal (silhouette)
+        if (goalPos.r === r && goalPos.c === c) {
+          const centerX = x + cellSize / 2;
+          const centerY = y + cellSize / 2;
+
+          ctx.fillStyle = '#f7768e'; 
+
+          // HEAD
+          ctx.beginPath();
+          ctx.arc(centerX, centerY - cellSize * 0.22, cellSize * 0.14, 0, Math.PI * 2);
+          ctx.fill();
+
+          // TORSO
+          ctx.beginPath();
+          ctx.rect(
+            centerX - cellSize * 0.12,
+            centerY - cellSize * 0.08,
+            cellSize * 0.24,
+            cellSize * 0.28
+          );
+          ctx.fill();
+
+          // ARMS
+          ctx.fillRect(
+            centerX - cellSize * 0.32,
+            centerY - cellSize * 0.05,
+            cellSize * 0.64,
+            cellSize * 0.10
+          );
+
+          // LEGS
+          ctx.fillRect(
+            centerX - cellSize * 0.12,
+            centerY + cellSize * 0.20,
+            cellSize * 0.10,
+            cellSize * 0.26
+          );
+          ctx.fillRect(
+            centerX + cellSize * 0.02,
+            centerY + cellSize * 0.20,
+            cellSize * 0.10,
+            cellSize * 0.26
+          );
+        }
+
+
+        // policy arrows
+        if(showPolicyEl.checked){
+          const qvals = Q[r][c];
+          const bestA = qvals.indexOf(Math.max(...qvals));
+          ctx.fillStyle = 'rgba(255,255,255,0.92)';
+          ctx.font = `${Math.max(10,cellSize/3)}px sans-serif`;
+          let arrow = '';
+          if(bestA===0) arrow='↑';
+          if(bestA===1) arrow='↓';
+          if(bestA===2) arrow='←';
+          if(bestA===3) arrow='→';
+          if(qvals.some(v=>Math.abs(v)>0.001)) {
+            ctx.fillText(arrow, x + cellSize/2, y + cellSize/2 + (cellSize*0.06));
+          }
+        }
+
+        // border
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.strokeRect(x+0.5,y+0.5,cellSize-1,cellSize-1);
+      }
+    }
+
+    // draw agent (drone)
+    const ax = agent.c * cellSize;
+    const ay = agent.r * cellSize;
+
+    // body
+    ctx.fillStyle = '#7aa2ff'; /* Couleur d'accentuation pour l'agent */
+    ctx.beginPath();
+    ctx.rect(ax + cellSize*0.25, ay + cellSize*0.35, cellSize*0.5, cellSize*0.3);
+    ctx.fill();
+
+    // propellers
+    ctx.fillStyle = '#c0c0c0';
+    ctx.beginPath();
+    ctx.arc(ax+cellSize*0.25, ay+cellSize*0.25, cellSize*0.1, 0, Math.PI*2);
+    ctx.arc(ax+cellSize*0.75, ay+cellSize*0.25, cellSize*0.1, 0, Math.PI*2);
+    ctx.arc(ax+cellSize*0.25, ay+cellSize*0.75, cellSize*0.1, 0, Math.PI*2);
+    ctx.arc(ax+cellSize*0.75, ay+cellSize*0.75, cellSize*0.1, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // Chart rendering
+  function renderChart(){
+    const w = chartCanvas.width;
+    const h = chartCanvas.height;
+    
+    chartCtx.clearRect(0, 0, w, h);
+    
+    if(episodeRewards.length === 0){
+      chartCtx.fillStyle = '#9aa0a6';
+      chartCtx.font = '14px sans-serif';
+      chartCtx.textAlign = 'center';
+      chartCtx.textBaseline = 'middle';
+      chartCtx.fillText('Training data will appear here...', w/2, h/2);
+      return;
+    }
+    
+    const padding = 40;
+    const chartW = w - padding * 2;
+    const chartH = h - padding * 2;
+    
+    // Calculate bounds
+    const maxReward = Math.max(...episodeRewards, 10);
+    const minReward = Math.min(...episodeRewards, -10);
+    const rewardRange = maxReward - minReward;
+    
+    // Draw axes
+    chartCtx.strokeStyle = '#5a5a6b';
+    chartCtx.lineWidth = 1;
+    chartCtx.beginPath();
+    chartCtx.moveTo(padding, padding);
+    chartCtx.lineTo(padding, h - padding);
+    chartCtx.lineTo(w - padding, h - padding);
+    chartCtx.stroke();
+    
+    // Y-axis labels
+    chartCtx.fillStyle = '#b4b4c2';
+    chartCtx.font = '11px var(--font-family)';
+    chartCtx.textAlign = 'right';
+    chartCtx.textBaseline = 'middle';
+    
+    for(let i = 0; i <= 4; i++){
+      const val = minReward + (rewardRange * i / 4);
+      const y = h - padding - (chartH * i / 4);
+      chartCtx.fillText(val.toFixed(1), padding - 8, y);
+      
+      // Grid lines
+      chartCtx.strokeStyle = '#3a3a4b';
+      chartCtx.beginPath();
+      chartCtx.moveTo(padding, y);
+      chartCtx.lineTo(w - padding, y);
+      chartCtx.stroke();
+    }
+    
+    // X-axis label
+    chartCtx.textAlign = 'center';
+    chartCtx.textBaseline = 'top';
+    chartCtx.fillText('Episodes', w/2, h - padding + 8);
+    
+    // Y-axis label
+    chartCtx.save();
+    chartCtx.translate(12, h/2);
+    chartCtx.rotate(-Math.PI/2);
+    chartCtx.fillText('Total Reward', 0, 0);
+    chartCtx.restore();
+    
+    // Plot rewards
+    const step = chartW / Math.max(episodeRewards.length - 1, 1);
+    
+    // Draw line (raw rewards)
+    chartCtx.strokeStyle = 'rgba(122, 162, 255, 0.7)'; /* Bleu accentué transparent */
+    chartCtx.lineWidth = 1;
+    chartCtx.beginPath();
+    
+    for(let i = 0; i < episodeRewards.length; i++){
+      const x = padding + i * step;
+      const normalizedY = (episodeRewards[i] - minReward) / rewardRange;
+      const y = h - padding - normalizedY * chartH;
+      
+      if(i === 0) chartCtx.moveTo(x, y);
+      else chartCtx.lineTo(x, y);
+    }
+    chartCtx.stroke();
+    
+    
+    // Moving average (last 20 episodes) - Policy Quality
+    if(episodeRewards.length > 5){
+      const windowSize = Math.min(20, episodeRewards.length);
+      chartCtx.strokeStyle = '#9ece6a'; /* Vert accentué pour l'amélioration */
+      chartCtx.lineWidth = 3;
+      chartCtx.setLineDash([]);
+      chartCtx.beginPath();
+      
+      for(let i = windowSize - 1; i < episodeRewards.length; i++){
+        const slice = episodeRewards.slice(i - windowSize + 1, i + 1);
+        const avg = slice.reduce((a,b)=>a+b, 0) / slice.length;
+        const x = padding + i * step;
+        const normalizedY = (avg - minReward) / rewardRange;
+        const y = h - padding - normalizedY * chartH;
+        
+        if(i === windowSize - 1) chartCtx.moveTo(x, y);
+        else chartCtx.lineTo(x, y);
+      }
+      chartCtx.stroke();
+    }
+  }
+
+  // Interaction (click to toggle)
+  canvas.addEventListener('click', (ev)=>{
+    const rect = canvas.getBoundingClientRect();
+    const x = ev.clientX - rect.left;
+    const y = ev.clientY - rect.top;
+    const c = Math.floor(x / cellSize);
+    const r = Math.floor(y / cellSize);
+    if(r<0||r>=rows||c<0||c>=cols) return;
+
+    if(ev.shiftKey){
+      goalPos = {r,c};
+    } else if(ev.ctrlKey || ev.metaKey){
+      startPos = {r,c};
+      agent = {...startPos};
+    } else {
+      if(!(startPos.r===r && startPos.c===c) && !(goalPos.r===r && goalPos.c===c)){
+        grid[r][c] = grid[r][c]===1?0:1;
+      }
+    }
+    // reset Q so agent must relearn after manual edits
+    Q = Array.from({length:rows}, ()=>Array.from({length:cols}, ()=>[0,0,0,0]));
+    render();
+  });
+
+  // Q-Learning helpers
+  function chooseAction(r,c, eps){
+    if(Math.random() < eps) return Math.floor(Math.random()*4);
+    const q = Q[r][c];
+    let best = -Infinity; let bestActs = [];
+    for(let a=0;a<4;a++){
+      if(q[a] > best){ best = q[a]; bestActs=[a]; }
+      else if(q[a] === best) bestActs.push(a);
+    }
+    return bestActs[Math.floor(Math.random()*bestActs.length)];
+  }
+
+  function stepAgent(action){
+    const a = ACTIONS[action];
+    let nr = agent.r + a.dr;
+    let nc = agent.c + a.dc;
+    if(nr < 0 || nr >= rows || nc < 0 || nc >= cols){
+      nr = agent.r; nc = agent.c;
+    }
+    agent.r = nr; agent.c = nc;
+    let reward = -0.1;
+    if(grid[nr][nc] === 1) { reward += -10; return {reward, done:true}; }
+    if(nr === goalPos.r && nc === goalPos.c) { reward += 10; return {reward, done:true}; }
+    return {reward, done:false};
+  }
+
+  // Utility sleep (ms)
+  function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
+
+  // Training (single async loop)
+  async function runTraining(){
+    if(running) return;
+    running = true;
+    paused = false;
+    stopRequested = false;
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+    episodesTarget = parseInt(episodesEl.value);
+    speedMs = parseInt(speedEl.value);
+    epsilon = parseFloat(epsEl.value);
+    epsVal.innerText = epsEl.value;
+    let alpha = parseFloat(lrEl.value);
+    let gamma = parseFloat(gammaEl.value);
+    let decay = parseFloat(decayEl.value);
+
+    updateStats();
+
+    for(let ep = 1; ep <= episodesTarget; ep++){
+      if(stopRequested) break;
+      episode = ep;
+      agent = {...startPos};
+      step = 0;
+      let episodeReward = 0;
+      updateHUD();
+
+      // step loop until terminal or max steps
+      const maxSteps = Math.max(50, rows * cols * 6);
+      let done = false;
+      for(step = 1; step <= maxSteps; step++){
+        // dynamic parameters (live-adjustable)
+        alpha = parseFloat(lrEl.value);
+        gamma = parseFloat(gammaEl.value);
+        decay = parseFloat(decayEl.value);
+        speedMs = parseInt(speedEl.value);
+
+        while(paused && !stopRequested){
+          await sleep(50);
+        }
+        if(stopRequested) break;
+
+        // pick and apply action
+        const a = chooseAction(agent.r, agent.c, epsilon);
+        const prevR = agent.r, prevC = agent.c;
+        const res = stepAgent(a);
+        const newR = agent.r, newC = agent.c;
+        const bestNext = Math.max(...Q[newR][newC]);
+
+        // Q-Learning Update
+        const tdError = res.reward + gamma*bestNext - Q[prevR][prevC][a];
+        Q[prevR][prevC][a] += alpha * tdError;
+
+        episodeReward += res.reward;
+        done = res.done;
+
+        // render + HUD
+        lastRewardEl.innerText = Math.round(res.reward*100)/100;
+        epCount.innerText = episode;
+        stepCount.innerText = step;
+        epsHUD.innerText = epsilon.toFixed(3);
+        document.getElementById('tdErrorHUD').innerText = tdError.toFixed(4); 
+        render();
+
+        if(done) break;
+        await sleep(Math.max(1, speedMs));
+      }
+
+      // Record episode stats
+      episodeRewards.push(episodeReward);
+      episodeSteps.push(step);
+      totalReward += episodeReward;
+      
+      if(episodeReward > bestReward){
+        bestReward = episodeReward;
+        bestEpisodeNum = episode;
+      }
+
+      // Update stats and chart
+      updateStats();
+      
+      if(episode % 5 === 0 || episode === episodesTarget){
+        renderChart();
+      }
+
+      // end of episode: decay epsilon and update HUD
+      epsilon = Math.max(0.01, epsilon * decay);
+      epsVal.innerText = epsilon.toFixed(3);
+      epsHUD.innerText = epsilon.toFixed(3);
+
+      await sleep(8);
+
+      if(stopRequested) break;
+    }
+
+    // Final chart update
+    renderChart();
+
+    // finished
+    running = false;
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    pauseBtn.innerText = 'Pause';
+  }
+
+  function pauseTraining(){
+    if(!running) return;
+    paused = !paused;
+    pauseBtn.innerText = paused ? 'Resume' : 'Pause';
+  }
+
+  // Export / Import map
+  function exportMap(){
+    const data = {
+      rows, cols, startPos, goalPos, grid
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'grid_map.json'; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function importMap(file){
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const obj = JSON.parse(ev.target.result);
+        if(!obj.rows || !obj.cols || !obj.grid) throw new Error('Invalid map format');
+        rows = obj.rows; cols = obj.cols;
+        rowsEl.value = rows; colsEl.value = cols;
+        rowsVal.innerText = rows; colsVal.innerText = cols;
+        makeGrid(rows, cols);
+        grid = obj.grid;
+        if(obj.startPos) startPos = obj.startPos;
+        if(obj.goalPos) goalPos = obj.goalPos;
+        agent = {...startPos};
+        resizeCanvas();
+        render();
+        renderChart();
+      } catch(e){
+        alert('Failed to import map: ' + e.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // Event wiring
+  startBtn.addEventListener('click', ()=>{ runTraining().catch(err=>console.error(err)); });
+  pauseBtn.addEventListener('click', ()=>{ pauseTraining(); });
+  resetBtn.addEventListener('click', ()=>{ stopRequested = true; running = false; paused = false; resetEnv(); });
+  loadParcoursBtn.addEventListener('click', ()=>{ loadExampleParcours(); });
+  clearObsBtn.addEventListener('click', ()=>{ for(let r=0;r<rows;r++) for(let c=0;c<cols;c++) grid[r][c]=0; Q = Array.from({length:rows}, ()=>Array.from({length:cols}, ()=>[0,0,0,0])); render(); });
+  exportMapBtn.addEventListener('click', exportMap);
+  importMapBtn.addEventListener('click', ()=> importMapFile.click());
+  importMapFile.addEventListener('change', (ev)=> {
+    if(ev.target.files && ev.target.files[0]) importMap(ev.target.files[0]);
+    ev.target.value = '';
+  });
+
+  // UI updates
+  function attachUI(){
+    lrEl.addEventListener('input', ()=> { lrVal.innerText = lrEl.value; updateStats(); });
+    gammaEl.addEventListener('input', ()=> { gammaVal.innerText = gammaEl.value; updateStats(); });
+    epsEl.addEventListener('input', ()=> { epsVal.innerText = epsEl.value; epsilon = parseFloat(epsEl.value); epsHUD.innerText = epsilon.toFixed(3); updateStats(); });
+    decayEl.addEventListener('input', ()=> decayVal.innerText = decayEl.value);
+    episodesEl.addEventListener('input', ()=> episodesVal.innerText = episodesEl.value);
+    speedEl.addEventListener('input', ()=> speedVal.innerText = speedEl.value);
+    rowsEl.addEventListener('input', ()=> {
+      rows = parseInt(rowsEl.value); rowsVal.innerText = rows;
+      makeGrid(rows, cols); resizeCanvas(); render(); renderChart();
+    });
+    colsEl.addEventListener('input', ()=> {
+      cols = parseInt(colsEl.value); colsVal.innerText = cols;
+      makeGrid(rows, cols); resizeCanvas(); render(); renderChart();
+    });
+    showQEl.addEventListener('change', ()=> render());
+    showPolicyEl.addEventListener('change', ()=> render());
+    window.addEventListener('resize', ()=> { resizeCanvas(); render(); renderChart(); });
+
+    // keyboard shortcuts
+    window.addEventListener('keydown', (e)=>{
+      if(e.code === 'Space'){ e.preventDefault(); if(running) pauseTraining(); else if(!running) runTraining(); }
+      if(e.key === 'r' || e.key === 'R'){ resetBtn.click(); }
+    });
+  }
+
+  // initialize
+  function init(){
+    rows = parseInt(rowsEl.value);
+    cols = parseInt(colsEl.value);
+    rowsVal.innerText = rows; colsVal.innerText = cols;
+    lrVal.innerText = lrEl.value;
+    gammaVal.innerText = gammaEl.value;
+    epsVal.innerText = epsEl.value;
+    decayVal.innerText = decayEl.value;
+    episodesVal.innerText = episodesEl.value;
+    speedVal.innerText = speedEl.value;
+    makeGrid(rows, cols);
+    resizeCanvas();
+    attachUI();
+    render();
+    renderChart();
+    pauseBtn.disabled = true;
+    epsHUD.innerText = epsilon.toFixed(3);
+    document.getElementById('tdErrorHUD').innerText = '0.0000'; 
+    document.getElementById('epsilonValue').innerText = epsilon.toFixed(3);
+    document.getElementById('alphaValue').innerText = parseFloat(lrEl.value).toFixed(2);
+    document.getElementById('gammaValue').innerText = parseFloat(gammaEl.value).toFixed(2);
+  }
+
+  init();
+
+})();
+</script>
+</body>
+</html>
