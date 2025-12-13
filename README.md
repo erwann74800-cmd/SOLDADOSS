@@ -28,7 +28,7 @@ ________________________________________________________________________________
  # Project structure:
    1. [introduction](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/introduction%20-%20SOLDADOSS.pdf)
    2. [work repartition](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/work%20repartition.pdf)
-   3. code explanaition
+   3. [code explanaition](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/Code%20and%20interface%20explanation.pdf)
    4. code
    5. [conclusion](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/Conclusion%20-%20SOLDADOSS.pdf)
    6. power point 
