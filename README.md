@@ -39,5 +39,5 @@ ________________________________________________________________________________
    3. [code explanaition](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/Code%20and%20interface%20explanation.pdf)
    4. [code](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/Code%20%20-%20%20SOLDADOSS.html)
    5. [conclusion](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/conclusion%20-%20SOLDADOSS.pdf)
-   6. power point 
+   6. [power point](https://github.com/erwann74800-cmd/SOLDADOSS/blob/main/presentation%20-%20SOLDADOSS.pdf)
 
